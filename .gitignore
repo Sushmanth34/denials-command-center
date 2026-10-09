@@ -1,0 +1,11 @@
+# patient data never goes in git - copy the data pack into ./data locally
+data/
+.env
+node_modules/
+web/dist/
+**/bin/
+**/obj/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo

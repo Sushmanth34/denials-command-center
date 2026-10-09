@@ -1,0 +1,45 @@
+# One command:  docker compose up --build      then open http://localhost:8080
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dcc
+      POSTGRES_USER: dcc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dcc}
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dcc -d dcc"]
+      interval: 3s
+      retries: 20
+    ports: ["127.0.0.1:5432:5432"]
+
+  # Loads + reconciles the data pack, runs the denial analysis, then exits. Safe to re-run:
+  #   docker compose run --rm pipeline
+  pipeline:
+    build: { context: ., dockerfile: pipeline/Dockerfile }
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      DATABASE_URL: postgresql://dcc:${POSTGRES_PASSWORD:-dcc}@db:5432/dcc
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DCC_AI_MODE: ${DCC_AI_MODE:-auto}
+      DCC_AI_MODEL: ${DCC_AI_MODEL:-}
+      DCC_DEMO_PASSWORD: ${DCC_DEMO_PASSWORD:-demo123}
+    volumes: ["./data:/data:ro"]
+    restart: "no"
+
+  api:
+    build: { context: ., dockerfile: api/Dockerfile }
+    depends_on: { pipeline: { condition: service_completed_successfully } }
+    environment:
+      DATABASE_URL: postgresql://dcc:${POSTGRES_PASSWORD:-dcc}@db:5432/dcc
+    volumes: [apikeys:/keys]
+    ports: ["127.0.0.1:5080:8080"]
+
+  web:
+    build: { context: ., dockerfile: web/Dockerfile }
+    depends_on: [api]
+    ports: ["127.0.0.1:8080:80"]
+
+volumes:
+  dbdata:
+  apikeys:

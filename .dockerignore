@@ -1,0 +1,8 @@
+**/node_modules
+**/bin
+**/obj
+web/dist
+data
+.env
+**/__pycache__
+.git

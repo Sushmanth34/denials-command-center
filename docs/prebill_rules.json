@@ -1,0 +1,482 @@
+{
+    "rules": [
+        {
+            "name": "I10 reported with I11.x (Excludes1)",
+            "owner": "Coding",
+            "action": "BLOCK",
+            "message": "I10 and I11.x cannot be reported together; remove I10 and keep the I11.x code.",
+            "rule_id": "PB-DX-EXCL1-I10-I11",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 1.0,
+                "claims_flagged": 34,
+                "denials_caught": 31,
+                "false_positives": 0,
+                "denied_amount_caught": "6405.00",
+                "denials_targeted_total": 31,
+                "expected_allowed_caught": "3971.10",
+                "claims_awaiting_payer_response": 4
+            },
+            "condition": {
+                "all": [
+                    {
+                        "op": "contains",
+                        "field": "dx_codes",
+                        "value": "I10"
+                    },
+                    {
+                        "op": "any_startswith",
+                        "field": "dx_codes",
+                        "value": "I11"
+                    }
+                ]
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+                "MPPO_DX-EXCL-03#2",
+                "MPPO_DX-EXCL-03#3"
+            ],
+            "targets_carc": [
+                "11"
+            ]
+        },
+        {
+            "name": "Rendering provider not enrolled with payer",
+            "note": "Reference list derived from B7 history with no paid claims. In production feed it from the credentialing roster (active enrollments by NPI x payer with effective dates).",
+            "owner": "Credentialing",
+            "action": "HOLD",
+            "message": "Rendering provider is not enrolled with this payer. Hold the claim until credentialing confirms an enrollment effective date on or before the DOS (enrollment is not retroactive).",
+            "rule_id": "PB-ENROLLMENT",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 1.0,
+                "claims_flagged": 29,
+                "denials_caught": 27,
+                "false_positives": 0,
+                "denied_amount_caught": "4460.00",
+                "denials_targeted_total": 27,
+                "expected_allowed_caught": "2765.20",
+                "claims_awaiting_payer_response": 3
+            },
+            "condition": {
+                "reference_contains": {
+                    "keys": [
+                        "rendering_npi",
+                        "payer_id"
+                    ],
+                    "reference": "providers_not_enrolled"
+                }
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+                "CSA_PROVIDER-ENROLLMENT#1",
+                "CSA_PROVIDER-ENROLLMENT#3"
+            ],
+            "targets_carc": [
+                "B7"
+            ],
+            "reference_data": {
+                "providers_not_enrolled": [
+                    {
+                        "payer_id": "CSA77",
+                        "provider": "Leena Rao",
+                        "rendering_npi": "1606169955"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Sunshine Medicaid initial NF visit requires SNF admission auth",
+            "owner": "Front desk / Authorization",
+            "action": "HOLD",
+            "message": "Initial nursing facility care (99304-99306) for DOS on/after 2026-04-01 must carry the SNF admission authorization number. Get it from the facility before billing.",
+            "rule_id": "PB-SMP-SNF-AUTH",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 1.0,
+                "claims_flagged": 19,
+                "denials_caught": 19,
+                "false_positives": 0,
+                "denied_amount_caught": "4210.00",
+                "denials_targeted_total": 26,
+                "expected_allowed_caught": "2610.20",
+                "claims_awaiting_payer_response": 0
+            },
+            "condition": {
+                "all": [
+                    {
+                        "op": "eq",
+                        "field": "payer_id",
+                        "value": "SMP12"
+                    },
+                    {
+                        "op": "gte",
+                        "field": "dos",
+                        "value": "2026-04-01"
+                    },
+                    {
+                        "lines_any": {
+                            "op": "in",
+                            "field": "cpt",
+                            "value": [
+                                "99304",
+                                "99305",
+                                "99306"
+                            ]
+                        }
+                    },
+                    {
+                        "op": "is_empty",
+                        "field": "auth_number"
+                    }
+                ]
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "SMP12"
+                ]
+            },
+            "policy_refs": [
+                "SMP_SNF-AUTH-2026#2",
+                "SMP_SNF-AUTH-2026#4"
+            ],
+            "targets_carc": [
+                "197"
+            ]
+        },
+        {
+            "name": "E/M with same-day procedure needs modifier 25",
+            "owner": "Coding",
+            "action": "HOLD",
+            "message": "E/M billed with a procedure on the same claim without modifier 25 will be bundled. Add 25 if the note documents a significant, separately identifiable E/M.",
+            "rule_id": "PB-MOD25-EM-WITH-PROCEDURE",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 1.0,
+                "claims_flagged": 22,
+                "denials_caught": 21,
+                "false_positives": 0,
+                "denied_amount_caught": "3710.00",
+                "denials_targeted_total": 21,
+                "expected_allowed_caught": "2300.20",
+                "claims_awaiting_payer_response": 1
+            },
+            "condition": {
+                "all": [
+                    {
+                        "lines_any": {
+                            "op": "in",
+                            "field": "cpt",
+                            "value": [
+                                "31500",
+                                "36556",
+                                "93010",
+                                "94002"
+                            ]
+                        }
+                    },
+                    {
+                        "lines_any": {
+                            "all": [
+                                {
+                                    "op": "in",
+                                    "field": "cpt",
+                                    "value": [
+                                        "99221",
+                                        "99222",
+                                        "99223",
+                                        "99224",
+                                        "99225",
+                                        "99226",
+                                        "99227",
+                                        "99228",
+                                        "99229",
+                                        "99230",
+                                        "99231",
+                                        "99232",
+                                        "99233",
+                                        "99234",
+                                        "99235",
+                                        "99236",
+                                        "99237",
+                                        "99238",
+                                        "99239",
+                                        "99304",
+                                        "99305",
+                                        "99306",
+                                        "99307",
+                                        "99308",
+                                        "99309",
+                                        "99310"
+                                    ]
+                                },
+                                {
+                                    "not": {
+                                        "op": "contains",
+                                        "field": "modifier",
+                                        "value": "25"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+                "ALL_PAYERS_MOD25-2026#1",
+                "ALL_PAYERS_MOD25-2026#2"
+            ],
+            "targets_carc": [
+                "97"
+            ]
+        },
+        {
+            "name": "Real-time eligibility check (270/271) for the DOS",
+            "note": "Needs an eligibility feed we do not have; backtest counts the CARC 27 denials it targets.",
+            "owner": "Front desk / Eligibility",
+            "action": "HOLD",
+            "message": "Verify active coverage on the date of service before billing; if terminated, find the active payer.",
+            "rule_id": "PB-ELIGIBILITY",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": true,
+                "precision": 1.0,
+                "claims_flagged": 17,
+                "denials_caught": 20,
+                "false_positives": 0,
+                "denied_amount_caught": "3660.00",
+                "denials_targeted_total": 20,
+                "expected_allowed_caught": "2269.20",
+                "claims_awaiting_payer_response": 0
+            },
+            "condition": {
+                "op": "eq",
+                "field": "eligibility_verified",
+                "value": false
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+            ],
+            "targets_carc": [
+                "27"
+            ],
+            "requires_external_data": true
+        },
+        {
+            "name": "Second subsequent hospital visit same patient same day",
+            "owner": "Coding",
+            "action": "HOLD",
+            "message": "Northstar pays one subsequent hospital visit per patient per day per specialty group. Bill a second visit only with modifier 25, a distinct diagnosis and a note showing a significant change.",
+            "rule_id": "PB-NSHP-SAME-DAY-SUBSEQUENT",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 0.92,
+                "claims_flagged": 13,
+                "denials_caught": 11,
+                "false_positives": 1,
+                "denied_amount_caught": "2255.00",
+                "denials_targeted_total": 11,
+                "expected_allowed_caught": "1398.10",
+                "claims_awaiting_payer_response": 1
+            },
+            "condition": {
+                "all": [
+                    {
+                        "op": "eq",
+                        "field": "payer_id",
+                        "value": "NS401"
+                    },
+                    {
+                        "lines_any": {
+                            "op": "in",
+                            "field": "cpt",
+                            "value": [
+                                "99231",
+                                "99232",
+                                "99233"
+                            ]
+                        }
+                    },
+                    {
+                        "other_claims_exist": {
+                            "match": [
+                                "member_id",
+                                "dos"
+                            ],
+                            "where": {
+                                "lines_any": {
+                                    "op": "in",
+                                    "field": "cpt",
+                                    "value": [
+                                        "99231",
+                                        "99232",
+                                        "99233"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "NS401"
+                ]
+            },
+            "policy_refs": [
+                "NSHP_HOSP-FREQ-07#1",
+                "NSHP_HOSP-FREQ-07#3"
+            ],
+            "targets_carc": [
+                "151"
+            ]
+        },
+        {
+            "name": "Approaching / past timely filing limit",
+            "note": "Most effective as a daily aging alert on unbilled encounters (DOS age > limit - 30), not only at submission. Limits per payer from payer_rules.csv.",
+            "owner": "Billing",
+            "action": "ESCALATE",
+            "message": "Claim is within 30 days of (or past) the payer's timely filing limit. Escalate same day; if already past, it will deny CARC 29 and cannot be appealed.",
+            "rule_id": "PB-TIMELY-FILING",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 1.0,
+                "claims_flagged": 9,
+                "denials_caught": 9,
+                "false_positives": 0,
+                "denied_amount_caught": "1725.00",
+                "denials_targeted_total": 9,
+                "expected_allowed_caught": "1069.50",
+                "claims_awaiting_payer_response": 0
+            },
+            "condition": {
+                "op": "gt",
+                "field": "days_dos_to_submission",
+                "value_from": "tf_buffer_days"
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+            ],
+            "targets_carc": [
+                "29"
+            ]
+        },
+        {
+            "name": "Exact duplicate of an already billed service",
+            "owner": "Billing",
+            "action": "BLOCK",
+            "message": "Same patient, DOS, provider and CPT already billed. Do not resubmit as a new claim; use a corrected claim (frequency 7) if something changed.",
+            "rule_id": "PB-DUPLICATE",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": 0.75,
+                "claims_flagged": 12,
+                "denials_caught": 6,
+                "false_positives": 2,
+                "denied_amount_caught": "910.00",
+                "denials_targeted_total": 6,
+                "expected_allowed_caught": "564.20",
+                "claims_awaiting_payer_response": 4
+            },
+            "condition": {
+                "other_claims_exist": {
+                    "match": [
+                        "member_id",
+                        "dos",
+                        "rendering_npi",
+                        "cpt_set"
+                    ],
+                    "where": {
+                        "op": "not_empty",
+                        "field": "payer_id"
+                    }
+                }
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+            ],
+            "targets_carc": [
+                "18"
+            ]
+        },
+        {
+            "name": "Authorization number belongs to a different payer",
+            "owner": "Front desk / Authorization",
+            "action": "WARN",
+            "message": "Authorization number format does not match the payer (e.g. a Sunshine 'SMPA' auth on a Coastal claim). Verify the patient's payer and the authorization.",
+            "rule_id": "PB-AUTH-FORMAT",
+            "backtest": {
+                "period": "claims with DOS Jan-Aug 2026",
+                "estimated": false,
+                "precision": null,
+                "claims_flagged": 1,
+                "denials_caught": 0,
+                "false_positives": 0,
+                "denied_amount_caught": "0.00",
+                "denials_targeted_total": 26,
+                "expected_allowed_caught": "0.00",
+                "claims_awaiting_payer_response": 1
+            },
+            "condition": {
+                "all": [
+                    {
+                        "op": "not_empty",
+                        "field": "auth_number"
+                    },
+                    {
+                        "op": "eq",
+                        "field": "auth_prefix_matches_payer",
+                        "value": false
+                    }
+                ]
+            },
+            "applies_to": {
+                "payer_ids": [
+                    "*"
+                ]
+            },
+            "policy_refs": [
+            ],
+            "targets_carc": [
+                "197"
+            ]
+        }
+    ],
+    "source": "Denials Command Center - backtested on Jan-Aug 2026 claims",
+    "data_as_of": "2026-09-30",
+    "generated_at": "2026-10-06T08:33:59.380626+00:00",
+    "schema_version": "1.0",
+    "condition_language": "See README: all/any/not, field ops (eq, in, contains, any_startswith, is_empty, not_empty, gte, gt), lines_any, other_claims_exist, reference_contains"
+}
