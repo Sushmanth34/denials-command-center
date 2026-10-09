@@ -1,9 +1,14 @@
 # AI usage log
 
-> Draft. Edit it so it reflects your own review of the code before you submit.
+**Tooling.** Claude (Anthropic), used as a pair-programmer for data analysis, code and documentation. Claude wrote most of
+the code; I set the scope and priorities, made the stack decisions (.NET 8 API, PostgreSQL, Python pipeline, Anthropic for
+the LLM layer) and checked the results.
 
-**Tooling.** Claude, used as a pair-programmer for analysis, code and docs. I directed the scope and reviewed the output.
-Every finding below was checked against the raw files.
+**What I did myself**
+- Reviewed the pipeline, API and UI code until I could explain how each part works and why.
+- Checked the key figures in the memo against the data pack and the database.
+- Ran the system locally on Windows (Docker Desktop setup, data pack, end-to-end run).
+- Edited code and documentation after the first delivery.
 
 ## Where AI helped most
 - **Profiling the data pack quickly.** Within the first hour it surfaced:

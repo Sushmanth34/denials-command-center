@@ -123,3 +123,8 @@ cd pipeline && python -m dcc.evaluate [--ai auto]  # AI evaluation against label
 - **One database role for the API and the pipeline.** Production should split them, with no UPDATE on `audit_log` granted at all, rather than relying only on the trigger.
 - **No outbound appeal submission or fax,** and no 276/277 claim-status integration for the no-response claims.
 - **Recovery probabilities are assumptions,** not learned from outcomes. Once appeal outcomes are captured they should be calibrated.
+
+## Time spent
+
+About 6–8 hours in total, covering the brief, data analysis, building with an AI pair-programmer (see
+[`docs/ai_usage_log.md`](docs/ai_usage_log.md)), code review, local setup and the walkthrough recording.
